@@ -1,30 +1,53 @@
 <?php
+// ============================================================
+// Clase Admin — Gestión de usuarios administradores
+// Archivo: assets/sentenciasSQL/admin.php
+// CAMBIOS: se agregó campo 'nombre' en el SELECT de leerAdmin
+//          para mostrarlo en el dashboard; se corrigió el campo
+//          'idAdmin' → 'id_usuario' en actualizarAdmin para
+//          consistencia con el esquema real de la tabla.
+// ============================================================
 class Admin {
-    public function leerAdmin($usuario, $contrasena) {
-        include "Conexion.php";
-        $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE usuario = :usuario AND contrasena = :contrasena LIMIT 1");
+
+    /** Valida credenciales y retorna los datos del admin o false. */
+    public function leerAdmin(string $usuario, string $contrasena): array|false {
+        include __DIR__ . "/Conexion.php";
+        $stmt = $pdo->prepare(
+            "SELECT id_usuario, usuario, nombre, contrasena
+             FROM usuarios
+             WHERE usuario = :usuario AND contrasena = :contrasena
+             LIMIT 1"
+        );
         $stmt->execute([
-            ':usuario' => $usuario,
-            ':contrasena' => $contrasena
+            ':usuario'    => $usuario,
+            ':contrasena' => $contrasena,
         ]);
         $admin = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $admin ? $admin : false;
+        return $admin ?: false;
     }
-    public function actualizarAdmin($id, $usuario, $contrasena) {
-        include "Conexion.php";
-        $stmt =$pdo->prepare("UPDATE usuarios SET usuario = :usuario, contrasena = :contrasena WHERE idAdmin = :id");
+
+    /** Actualiza usuario y contraseña de un admin. */
+    public function actualizarAdmin(int $id, string $usuario, string $contrasena): bool {
+        include __DIR__ . "/Conexion.php";
+        $stmt = $pdo->prepare(
+            "UPDATE usuarios
+             SET usuario = :usuario, contrasena = :contrasena
+             WHERE id_usuario = :id"
+        );
         return $stmt->execute([
-            ':usuario' => $usuario,
+            ':usuario'    => $usuario,
             ':contrasena' => $contrasena,
-            ':id' => $id
+            ':id'         => $id,
         ]);
     }
-    public function obtenerAdminPorId($id) {
-        include "Conexion.php"; 
-        $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE id_usuario = :id");
+
+    /** Obtiene los datos de un admin por ID. */
+    public function obtenerAdminPorId(int $id): array|false {
+        include __DIR__ . "/Conexion.php";
+        $stmt = $pdo->prepare(
+            "SELECT id_usuario, usuario, nombre FROM usuarios WHERE id_usuario = :id"
+        );
         $stmt->execute([':id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }
-
-?>

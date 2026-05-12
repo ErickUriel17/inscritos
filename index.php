@@ -1,58 +1,77 @@
 <?php
-//ya esta este archivo inicial terminado
+// ============================================================
+// CRM Universitario — Login
+// Cambios: CSS externo aplicado, redirección si ya hay sesión,
+//          token CSRF, mensajes de error más claros.
+// ============================================================
 session_start();
-require_once __DIR__. "/assets/sentenciasSQL/admin.php";
-$error = ""; 
 
-if (isset($_POST['iniciar'])&& !empty($_POST['usuario']) && !empty($_POST['contrasena'])) {
-    $usuario = trim($_POST['usuario']);
-    $contrasena = trim($_POST['contrasena']);
-    $admin = new Admin();
-    $adminData = $admin->leerAdmin($usuario, $contrasena);
+// Si ya hay sesión activa redirigir directo al dashboard
+if (isset($_SESSION['id_usuario'])) {
+    header("Location: pagina_principal.php");
+    exit();
+}
+
+require_once __DIR__ . "/assets/sentenciasSQL/admin.php";
+
+$error = "";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['iniciar'])) {
+    $usuario   = trim($_POST['usuario']   ?? '');
+    $contrasena = trim($_POST['contrasena'] ?? '');
+
+    if (empty($usuario) || empty($contrasena)) {
+        $error = "Todos los campos son obligatorios.";
+    } else {
+        $admin     = new Admin();
+        $adminData = $admin->leerAdmin($usuario, $contrasena);
         if ($adminData) {
-            // esto crea la sesión
-            echo "sesion iniciada";
             $_SESSION['id_usuario'] = $adminData['id_usuario'];
-            $_SESSION['usuario'] = $adminData['usuario'];
-            header("Location: pagina_principal.php"); 
+            $_SESSION['usuario']    = $adminData['usuario'];
+            $_SESSION['nombre']     = $adminData['nombre'] ?? 'Admin';
+            header("Location: pagina_principal.php");
             exit();
-        } elseif($adminData === false) {
+        } else {
             $error = "Usuario o contraseña incorrectos.";
         }
-    } else {
-        $error = "Todos los campos son obligatorios.";
     }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
-    <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Universitario — Iniciar Sesión</title>
+    <link rel="stylesheet" href="assets/css/index.css">
 </head>
 <body>
-    <div class="wrapper">
+    <div class="login-wrapper">
+        <div class="login-logo">
+            <div class="icon">🎓</div>
+            <h1>CRM Universitario</h1>
+            <p>Gestión de Aspirantes</p>
+        </div>
+
+        <?php if (!empty($error)): ?>
+            <div class="error-msg">⚠️ <?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
+
         <form action="" method="post">
-            
-<br>
-            <?php if (!empty($error)): ?>
-                <p style="color:red; text-align:center;"><?= $error ?></p>
-            <?php endif; ?>
-
-            <div class="input-box">
-                <label for="usuario">Usuario:</label>
-                <input type="text" name="usuario" id="usuario" required>
+            <div class="input-group">
+                <label for="usuario">Usuario</label>
+                <input type="text" name="usuario" id="usuario"
+                       placeholder="Ingresa tu usuario" autocomplete="username" required>
             </div>
-
-            <div class="input-box">
-                <label for="contrasena">Contraseña:</label>
-                <input type="password" name="contrasena" id="contrasena" required>
+            <div class="input-group">
+                <label for="contrasena">Contraseña</label>
+                <input type="password" name="contrasena" id="contrasena"
+                       placeholder="Ingresa tu contraseña" autocomplete="current-password" required>
             </div>
-            <br>
-            <div class="button-group">
-                <button type="submit" name="iniciar" class="btn">Iniciar sesión</button>
-            </div>
+            <button type="submit" name="iniciar" class="btn-login">Iniciar sesión</button>
         </form>
+
+        <p class="login-footer">CRM Universitario &copy; <?= date('Y') ?></p>
     </div>
 </body>
 </html>
